@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm install && npm run build
 
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm # path of downloaded packages on github runners
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
       # persisting build from this job so that it can later be used in another job
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -75,6 +81,7 @@ jobs:
       - name: Run tests
         run: npm test
 
+  #conditional job rendering main vs dev
   deploy-in-main:
     if: github.ref == 'refs/heads/main'
 
