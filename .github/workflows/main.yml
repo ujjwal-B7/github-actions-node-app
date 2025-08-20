@@ -4,7 +4,7 @@ name: node-app-github-actions
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
@@ -47,7 +47,7 @@ jobs:
         run: echo "We are on main branch"
 
       - name: Run only on pull request
-        if: ${{ github.event_name == 'pull_request' }}
+        if: github.event_name == 'pull_request'
         run: echo "This is a PR!"
 
       - name: Print environment variable
@@ -75,7 +75,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-  deploy:
+  deploy-in-main:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -83,7 +83,25 @@ jobs:
     needs: test
 
     steps:
-      - name: Download build artifact
+      - name: Deploying in main # simulating main
+        if: github.ref == 'refs/heads/main'
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app-build-${{ matrix.node }}
+          path: dist/
+
+      - run: ls dist/
+
+  deploy-in-dev:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [16, 18, 20]
+    needs: test
+
+    steps:
+      - name: Deploying in dev # simulating dev
+        if: github.ref == 'refs/heads/dev'
         uses: actions/download-artifact@v4
         with:
           name: node-app-build-${{ matrix.node }}
