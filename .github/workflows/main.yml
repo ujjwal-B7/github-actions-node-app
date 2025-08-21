@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [16, 18, 20] # defining multiple node versions to run multiple jobs for each node version variations
+        node: [16, 18, 20]
+      fail-fast: false # defining multiple node versions to run multiple jobs for each node version variations
 
     steps:
       # cloning the repo to run the below steps on this repo code
@@ -81,18 +82,37 @@ jobs:
       - name: Run tests
         run: npm test
 
-  #conditional job rendering main vs dev
-  deploy-in-main:
+  #conditional job rendering main, dev, staging
+
+  deploy-in-main: # deploying in render
     if: github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploying in render
+        uses: JorgeLNJunior/render-deploy@v1.4.4
+        with:
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          clear_cache: true
+          wait_deploy: true
+          github_deployment: true
+          deployment_environment: "production"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-in-staging:
+    if: github.ref == 'refs/heads/staging'
 
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node: [16, 18, 20]
+      fail-fast: false # disabling it to see which version thrown error and which actually passed
     needs: test
 
     steps:
-      - name: Deploying in main # simulating main
+      - name: Deploying in staging # simulating staging
         uses: actions/download-artifact@v4
         with:
           name: node-app-build-${{ matrix.node }}
@@ -107,6 +127,7 @@ jobs:
     strategy:
       matrix:
         node: [16, 18, 20]
+      fail-fast: false
     needs: test
 
     steps:
